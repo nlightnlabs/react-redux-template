@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import './App.css';
+import React, { useState, useEffect, useRef } from 'react';
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useSelector, useDispatch } from 'react-redux';
 import { setUser, setUserLoggedIn } from './redux/slices/authSlice';
-import { setCurrentPage, setPages, setPageList } from './redux/slices/navSlice';
+import { setCurrentPage, setPageList } from './redux/slices/navSlice';
 import { setAppData } from './redux/slices/appDataSlice';
 
-import Home from "./pages/Home";
+import Home from "./Home";
 import Header from "./components/Header";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import ResetPassword from "./pages/ResetPassword";
+import Menu from "./components/Menu.js"
+import SignIn from "./modules/authentication/pages/SignIn";
+import SignUp from "./modules/authentication/pages/SignUp";
+import ResetPassword from "./modules/authentication/pages/ResetPassword";
+import Profile from "./modules/account/pages/Profile";
+import Settings from "./modules/account/pages/Settings";
+
 import { current } from '@reduxjs/toolkit';
 
 function PageComponent({ Page }) {
@@ -18,52 +21,85 @@ function PageComponent({ Page }) {
 }
 
 function App() {
+
+  // Set application details:
+  const appName = "template"
+  const logoFile = "nlightn_labs_logo.png"
+  const dbName = "main"
+  const fileStorageBucketName = "nlightnlabs01"
+  const theme = "nlightn labs main"
+
+  // Global States
   const user = useSelector(state => state.authentication.user);
   const userLoggedIn = useSelector(state => state.authentication.userLoggedIn);
   const currentPage = useSelector(state => state.navigation.currentPage);
-  const pages = useSelector(state => state.navigation.pages);
   const appData = useSelector(state => state.navigation.appData);
+  
   const dispatch = useDispatch();
+ 
+
+  // local states
+  const [pages, setPages] = useState([])
+  const [menuItems, setMenuItems] = useState([])
+  const containerRef = useRef()
+
+  // Setup data
+  const pageData = [
+ 
+    { id: 1, name: "SignIn", label: "Sign In", component: <SignIn/> },
+    { id: 2, name: "SignUp", label: "Sign Up",component: <SignUp /> },
+    { id: 3, name: "ResetPassword", label: "Reset Password",component: <ResetPassword/> },
+    { id: 4, name: "Home", label: "Home", component: <Home/> },
+    { id: 5, name: "Profile", label: "Profile", component: <Profile/> },
+    { id: 6, name: "Settings", label: "Settings", component: <Settings/> },
+  ];
+
+  const menuItemsData = [
+    {id: 1, section: 1, name: "home", label: "Home", icon: "HomeIcon", link: "Home"},
+    {id: 2, section: 1, name: "profile", label: "Profile", icon: "ProfileIcon", link: "Profile"},
+    {id: 3, section: 1, name: "settings", label: "Settings", icon: "SettingsIcon", link: "Settings"},
+    {id: 4, section: 2, name: "module1", label: "Module 1", icon: "AppIcon", link: "Home"},
+    {id: 5, section: 2, name: "module2", label: "Module 2", icon: "AppIcon", link: "Home"},
+    {id: 6, section: 2, name: "module3", label: "Module 3", icon: "AppIcon", link: "Home"}
+  ]
 
   const getPages = async () => {
-    const pageData = [
-      { id: 1, name: "Home", label: "Home" },
-      { id: 2, name: "SignIn", label: "Sign In" },
-      { id: 3, name: "SignUp", label: "Sign Up" },
-      { id: 4, name: "ResetPassword", label: "Reset Password" },
-    ];
-    const response = pageData;
-    dispatch(setPages(response));
+    setPages(pageData)
   };
+
+  
+  const getMenuItems = async ()=>{
+    setMenuItems(menuItemsData)
+  }
+
 
   useEffect(() => {
-    console.log("user", user);
-    console.log("userLoggedIn", userLoggedIn);
-    console.log("currentPage", currentPage);
+    console.log(currentPage)
     getPages();
+    getMenuItems()
   }, []);
 
-  const componentMap = {
-    Home,
-    SignIn,
-    SignUp,
-    ResetPassword,
-  };
 
-  const PageToRender = componentMap[currentPage];
 
   return (
-    <div className="App">
-      <Header />
-      {!userLoggedIn && currentPage==="SignUp" ?
-        <SignUp/>
-      :
-      !userLoggedIn ?
-        <SignIn/>
-      :
-        <PageComponent Page={PageToRender} />
-      }
-      
+    <div className="flex-container overflow-hidden" style={{height: "100vh", width: "100vw"}}>
+        
+        <Header appName={appName} logo={logoFile}/>
+
+        <div className="d-flex w-100" style={{height:"100%"}}>
+          {!userLoggedIn && currentPage==="SignUp" ?
+            <SignUp/>
+          :
+          !userLoggedIn ?
+            <SignIn/>
+          :
+            <div className="d-flex w-100 justify-content-between" style={{height:"100%"}}>
+                {pages.length>0  && pages.find(i=>i.name ===currentPage).component}
+                {menuItems.length>0 && <Menu menuItems={menuItems} colorTheme="nlightn blue"/> }
+            </div>
+          }
+        </div>
+
     </div>
   );
 }
